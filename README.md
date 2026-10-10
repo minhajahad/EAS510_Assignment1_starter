@@ -85,3 +85,33 @@ restart never touches GitHub.
 ## License
 
 Apache 2.0. See `LICENSE`.
+
+
+## Observed weakness in V1: what failed and why
+- In my V1 hard-case results, cropping was the biggest weakness.
+- v1 (off-center crop + compression): 0 out of 10 matched.
+- v2 (crop + brightness + compression): 0 out of 10 matched.
+- v6 (crop + resize): 5 out of 10 matched.
+- Resize by itself was also weaker: v3 matched 4 out of 10.
+
+
+## Design decision for V2: what Rule 4 is and why you chose it
+- I added Rule 4 using Canny edge detection.
+- I chose it because the main V1 weakness was cropped images.
+- The rule converts both images to grayscale and finds edges using cv2.Canny.
+- It then compares the edge maps using template matching.
+- The idea is to compare image structure instead of depending only on color or file size.
+- I used the 25/25/40/10 point split so all four rules still total 100.
+
+
+## Effect of the change: accuracy before/after on easy vs hard
+- V1 hard result: 29 matched and 31 rejected out of 60 hard images.
+- V2 processed all 135 required images and produced 56 matches and 79 rejections.
+- The format checker passed: PASS: results_v2.txt (135 images).
+
+
+## Trade-offs: what new costs or risks did Rule 4 introduce
+- Rule 4 adds more image processing because Canny edge detection and template matching must run for every comparison.
+- This made V2 slower than V1.
+- Edge matching can still be weak when an image is resized, cropped heavily, or changed enough that the edges do not align.
+- Adding Rule 4 also required reducing Rule 1 and Rule 2 from 30 points to 25 points each so the total remained 100.
